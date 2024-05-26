@@ -1,0 +1,74 @@
+# Import python packages
+
+import streamlit as st
+from snowflake.snowpark.context import get_active_session
+from snowflake.snowpark.functions import col
+
+# Write directly to the app
+
+st.title(":cup_with_straw: Customize Your Smoothie! :cup_with_straw:")
+st.write(
+    """Choose the fruits you want in your custom Smoothie!
+    """)
+
+#option = st.selectbox(
+#    'How would you like to be contacted?',
+#    ('Email', 'Home phone', 'Mobile phone'))
+
+#st.write('You selected:', option)
+
+# option = st.selectbox(
+#    'What is your favorite fruit?',
+#    ('Banana', 'Strawberry', 'Peach'))
+
+# st.write('Your favorite fruit is:', option)
+
+#Lesson 4 - Add a name box for smoothie orders
+
+name_on_order = st.text_input('Name on Smoothie:')
+st.write('The name on your Smoothie will be:', name_on_order)
+
+session = get_active_session()
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
+#st.dataframe(data=my_dataframe, use_container_width=True)
+
+# Lesson 2
+# Remove SelectBox commands from code above
+# Add COLUMN function (see lines 25 and 27)
+# Add Multiselect (also comment out line 29 above)
+
+ingredients_list = st.multiselect(
+    'Choose up to 5 ingredients:'
+    , my_dataframe
+    , max_selections=5
+)
+
+#Convert the LIST to a STRING
+
+if ingredients_list:
+    ingredients_string = ''
+
+    for fruit_chosen in ingredients_list:
+       ingredients_string += fruit_chosen + ' '
+
+    #st.write(ingredients_string)
+
+#Build a SQL Insert Statement & Test It
+
+    my_insert_stmt = """ insert into smoothies.public.orders(ingredients ,name_on_order)
+            values ('""" + ingredients_string + """','"""+name_on_order+"""')"""
+
+    #st.write(my_insert_stmt)
+    #st.stop()
+
+#Insert the Order into Snowflake, Add a Submit button
+
+    time_to_insert = st.button('Submit Order')
+
+    if time_to_insert:
+        session.sql(my_insert_stmt).collect()
+    
+    st.success('Your Smoothie is ordered, '+name_on_order+'!', icon="✅")
+
+
+
